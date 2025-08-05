@@ -1,0 +1,52 @@
+.booking-wrapper {
+  background-image: url('/background.png');
+  background-size: cover;
+  background-position: center;
+  min-height: 100vh;
+  padding: 2rem;
+}
+
+.booking-form {
+  background-color: rgba(255, 255, 255, 0.9);
+  max-width: 960px;
+  margin: auto;
+  border-radius: 16px;
+  padding: 2rem;
+  box-shadow: 0 0 20px rgba(0,0,0,0.4);
+}
+
+.trip-buttons button {
+  margin-right: 1rem;
+  padding: 0.5rem 1rem;
+}
+
+.selectors select {
+  margin-right: 1rem;
+  padding: 0.4rem;
+}
+
+.sliders {
+  margin-top: 1rem;
+}
+
+.vehicle-list {
+  margin-top: 2rem;
+  display: grid;
+  gap: 2rem;
+}
+
+.vehicle-card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 1rem;
+  text-align: center;
+  box-shadow: 0 0 12px rgba(0,0,0,0.1);
+}
+
+.vehicle-card img {
+  width: 100%;
+  max-width: 100%;
+  height: auto;
+  object-fit: cover;
+  border-radius: 12px;
+}
