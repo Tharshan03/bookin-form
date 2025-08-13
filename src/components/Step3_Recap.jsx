@@ -1,3 +1,4 @@
+// src/components/Step3_Recap.jsx
 import React from "react";
 
 const Step3_Recap = ({
@@ -6,42 +7,62 @@ const Step3_Recap = ({
   departureDate, returnDate, passengers, childSeats, luggage, selectedVehicle,
   price, fullName, email, phone, flightNumber, comment,
   prevStep, sending, mailStatus, handleConfirm,
-}) => (
-  <div className="flex justify-center items-center min-h-screen bg-black">
-    <div className="bg-white rounded-2xl shadow-lg p-8 w-full max-w-md">
-      <h2 className="text-2xl font-bold mb-6 text-center">{t.step3_title || "Récapitulatif de la réservation"}</h2>
-      
+  embedded = false,
+}) => {
+  const fmt = (d) =>
+    d
+      ? d.toLocaleString("fr-FR", {
+          day: "2-digit", month: "2-digit", year: "numeric",
+          hour: "2-digit", minute: "2-digit",
+        })
+      : "";
+
+  // Contenu principal (sans carte)
+  const Content = (
+    <>
+      <h2 className="text-xl font-bold mb-4 text-center">
+        {t.step3_title || "Récapitulatif de la réservation"}
+      </h2>
+
+      {/* Trajet */}
       <div className="mb-4">
-        <h3 className="font-semibold text-lg mb-2">{t.recapTrip || "📝 Trajet"}</h3>
-        <p><b>{t.tripType || "Type"} :</b> {t[tripType] || tripType}</p>
-        <p><b>{t.departure || "Départ"} :</b> {t[departure] || (departure && departure.charAt(0).toUpperCase() + departure.slice(1))}</p>
-        <p><b>{t.arrival || "Arrivée"} :</b> {t[arrival] || (arrival && arrival.charAt(0).toUpperCase() + arrival.slice(1))}</p>
-        {(departure === "disney" || arrival === "disney") && selectedHotel && (
-          <p><b>{t.selectHotel || "Hôtel Disney"} :</b> {selectedHotel.label}</p>
-        )}
-        <p><b>{t.departureDate || "Date de départ"} :</b> {departureDate ? departureDate.toLocaleString("fr-FR", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" }) : ""}</p>
-        {tripType === "round-trip" && (
-          <p><b>{t.returnDate || "Date de retour"} :</b> {returnDate ? returnDate.toLocaleString("fr-FR", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" }) : ""}</p>
-        )}
-        <p><b>{t.passengers || "Passagers"} :</b> {passengers}</p>
-        <p><b>{t.childSeats || "Sièges enfant"} :</b> {childSeats}</p>
-        <p><b>{t.luggage || "Valises"} :</b> {luggage}</p>
-        <p><b>{t.vehicleChoice || "Véhicule"} :</b> {selectedVehicle && t[selectedVehicle] ? t[selectedVehicle] : selectedVehicle}</p>
+        <h3 className="font-semibold mb-2">{t.recapTrip || "📝 Trajet"}</h3>
+        <ul className="space-y-1 text-sm">
+          <li><span className="font-medium">{t.tripType || "Type"} :</span> {t[tripType] || tripType}</li>
+          <li><span className="font-medium">{t.departure || "Départ"} :</span> {t[departure] || (departure?.[0]?.toUpperCase() + departure?.slice(1))}</li>
+          <li><span className="font-medium">{t.arrival || "Arrivée"} :</span> {t[arrival] || (arrival?.[0]?.toUpperCase() + arrival?.slice(1))}</li>
+          {(departure === "disney" || arrival === "disney") && selectedHotel && (
+            <li><span className="font-medium">{t.selectHotel || "Hôtel Disney"} :</span> {selectedHotel.label}</li>
+          )}
+          <li><span className="font-medium">{t.departureDate || "Date de départ"} :</span> {fmt(departureDate)}</li>
+          {tripType === "round-trip" && (
+            <li><span className="font-medium">{t.returnDate || "Date de retour"} :</span> {fmt(returnDate)}</li>
+          )}
+          <li><span className="font-medium">{t.passengers || "Passagers"} :</span> {passengers}</li>
+          <li><span className="font-medium">{t.childSeats || "Sièges enfant"} :</span> {childSeats}</li>
+          <li><span className="font-medium">{t.luggage || "Valises"} :</span> {luggage}</li>
+          <li><span className="font-medium">{t.vehicleChoice || "Véhicule"} :</span> {t[selectedVehicle] || selectedVehicle}</li>
+        </ul>
       </div>
 
+      {/* Client */}
       <div className="mb-4">
-        <h3 className="font-semibold text-lg mb-2">{t.customerInfo || "👤 Client"}</h3>
-        <p><b>{t.fullName || "Nom"} :</b> {fullName}</p>
-        <p><b>{t.email || "Email"} :</b> {email}</p>
-        <p><b>{t.phone || "Téléphone"} :</b> {phone}</p>
-        {flightNumber && <p><b>{t.flightNumber || "Vol"} :</b> {flightNumber}</p>}
-        {comment && <p><b>{t.comment || "Commentaire"} :</b> {comment}</p>}
+        <h3 className="font-semibold mb-2">{t.customerInfo || "👤 Client"}</h3>
+        <ul className="space-y-1 text-sm">
+          <li><span className="font-medium">{t.fullName || "Nom"} :</span> {fullName}</li>
+          <li><span className="font-medium">{t.email || "Email"} :</span> {email}</li>
+          <li><span className="font-medium">{t.phone || "Téléphone"} :</span> {phone}</li>
+          {flightNumber && <li><span className="font-medium">{t.flightNumber || "Vol"} :</span> {flightNumber}</li>}
+          {comment && <li><span className="font-medium">{t.comment || "Commentaire"} :</span> {comment}</li>}
+        </ul>
       </div>
 
-      <div className="mb-6 text-center text-green-600 font-bold text-lg">
-        {t.estimatedPrice || "Prix total"} : {price ? `${price} €` : "--"}
+      {/* Prix */}
+      <div className="mb-4 text-center text-green-600 font-semibold">
+        {(t.estimatedPrice || "Prix total")} : {price ? `${price} €` : "--"}
       </div>
 
+      {/* Actions */}
       <div className="flex justify-between gap-4">
         <button
           type="button"
@@ -60,19 +81,33 @@ const Step3_Recap = ({
         </button>
       </div>
 
-      {/* Message de statut */}
+      {/* Statut */}
       {mailStatus === "success" && (
-        <div className="mt-4 text-center text-green-600 font-semibold">
+        <div className="mt-3 text-center text-green-600 font-semibold">
           {t.success || "Réservation confirmée !"}
         </div>
       )}
       {mailStatus === "error" && (
-        <div className="mt-4 text-center text-red-600 font-semibold">
+        <div className="mt-3 text-center text-red-600 font-semibold">
           {t.error || "Erreur lors de l'envoi, veuillez réessayer."}
         </div>
       )}
+    </>
+  );
+
+  // Si "embedded", on ne re-crée PAS de carte interne.
+  if (embedded) {
+    return <div className="w-full">{Content}</div>;
+  }
+
+  // Sinon, version autonome pleine page
+  return (
+    <div className="flex justify-center items-center min-h-screen bg-black">
+      <div className="bg-white rounded-xl shadow-md p-4 md:p-5 w-full max-w-sm mx-auto">
+        {Content}
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 export default Step3_Recap;

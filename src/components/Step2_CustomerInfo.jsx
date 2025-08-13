@@ -1,3 +1,4 @@
+// src/components/Step2_CustomerInfo.jsx
 import React, { useRef, useState } from "react";
 import ReCAPTCHA from "react-google-recaptcha";
 
@@ -11,28 +12,25 @@ const Step2_CustomerInfo = ({
   prevStep, nextStep,
   captchaToken, setCaptchaToken,
 }) => {
-  const recaptchaRef = useRef();
+  const recaptchaRef = useRef(null);
   const [captchaError, setCaptchaError] = useState(false);
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!captchaToken) {
-      setCaptchaError(true);
-      return;
-    }
+    if (!captchaToken) { setCaptchaError(true); return; }
     setCaptchaError(false);
     nextStep();
   };
 
   return (
-    <div className="flex justify-center items-center min-h-screen bg-black">
-      <form
-        className="bg-white rounded-2xl shadow-lg p-8 w-full max-w-md"
-        onSubmit={handleSubmit}
-      >
-        <h2 className="text-2xl font-bold mb-6 text-center">{t.step2_title}</h2>
-        <div className="mb-4">
-          <label className="block font-semibold mb-1">👤 {t.fullName}</label>
+    <form onSubmit={handleSubmit} className="h-full flex flex-col">
+      {/* Titre — identique Step1 */}
+      <h2 className="text-xl font-bold mb-4 text-center">{t.step2_title}</h2>
+
+      {/* Contenu — labels/inputs identiques Step1 */}
+      <div className="flex-1 overflow-y-auto no-scrollbar pr-1 space-y-3">
+        <div>
+          <label className="block text-sm font-semibold mb-1">👤 {t.fullName}</label>
           <input
             type="text"
             className="w-full border rounded px-3 py-2"
@@ -42,8 +40,9 @@ const Step2_CustomerInfo = ({
             required
           />
         </div>
-        <div className="mb-4">
-          <label className="block font-semibold mb-1">✉️ {t.email}</label>
+
+        <div>
+          <label className="block text-sm font-semibold mb-1">✉️ {t.email}</label>
           <input
             type="email"
             className="w-full border rounded px-3 py-2"
@@ -53,8 +52,9 @@ const Step2_CustomerInfo = ({
             required
           />
         </div>
-        <div className="mb-4">
-          <label className="block font-semibold mb-1">📞 {t.phone}</label>
+
+        <div>
+          <label className="block text-sm font-semibold mb-1">📞 {t.phone}</label>
           <input
             type="tel"
             className="w-full border rounded px-3 py-2"
@@ -64,8 +64,11 @@ const Step2_CustomerInfo = ({
             required
           />
         </div>
-        <div className="mb-4">
-          <label className="block font-semibold mb-1">✈️ {t.flightNumber}</label>
+
+        <div>
+          <label className="block text-sm font-semibold mb-1">
+            ✈️ {t.flightNumber} <span className="text-xs text-slate-500">({t.optional || "optionnel"})</span>
+          </label>
           <input
             type="text"
             className="w-full border rounded px-3 py-2"
@@ -74,8 +77,11 @@ const Step2_CustomerInfo = ({
             placeholder={t.flightNumber}
           />
         </div>
-        <div className="mb-4">
-          <label className="block font-semibold mb-1">💬 {t.comment}</label>
+
+        <div>
+          <label className="block text-sm font-semibold mb-1">
+            💬 {t.comment} <span className="text-xs text-slate-500">({t.optional || "optionnel"})</span>
+          </label>
           <textarea
             className="w-full border rounded px-3 py-2"
             value={comment}
@@ -85,40 +91,46 @@ const Step2_CustomerInfo = ({
           />
         </div>
 
-        <div className="my-6 flex justify-center">
-          <ReCAPTCHA
-            ref={recaptchaRef}
-            sitekey="6LfuxpsrAAAAAOBCiuCu1rkWSmxrTpY4P9jAWwKf" // remplace par ta vraie clé
-            onChange={token => {
-              setCaptchaToken(token);
-              setCaptchaError(false);
-            }}
-          />
+        {/* reCAPTCHA compact */}
+        <div className="mt-2 flex justify-center">
+          <div className="inline-block transform scale-90 origin-center">
+            <ReCAPTCHA
+              ref={recaptchaRef}
+              sitekey="6LfuxpsrAAAAAOBCiuCu1rkWSmxrTpY4P9jAWwKf"
+              size="compact"
+              onChange={(token) => {
+                setCaptchaToken(token);
+                setCaptchaError(false);
+              }}
+            />
+          </div>
         </div>
+
         {captchaError && (
-          <div className="text-red-600 text-sm mb-2 text-center">
+          <div className="text-red-600 text-xs mt-1 text-center">
             {t.captchaError || "Veuillez valider le captcha"}
           </div>
         )}
+      </div>
 
-        <div className="flex justify-between gap-4 mt-6">
-          <button
-            type="button"
-            className="w-1/2 bg-gray-100 text-gray-900 font-semibold py-2 rounded-lg shadow"
-            onClick={prevStep}
-          >
-            {t.previous}
-          </button>
-          <button
-            type="submit"
-            className={`w-1/2 bg-blue-600 text-white font-semibold py-2 rounded-lg shadow hover:bg-blue-700 transition ${!captchaToken ? "opacity-60 cursor-not-allowed" : ""}`}
-            disabled={!captchaToken}
-          >
-            {t.next}
-          </button>
-        </div>
-      </form>
-    </div>
+      {/* Footer — même style de boutons que Step1 */}
+      <div className="flex justify-between gap-4 pt-3">
+        <button
+          type="button"
+          className="h-12 px-6 rounded-xl bg-gray-100 text-gray-900 font-semibold shadow hover:bg-gray-200"
+          onClick={prevStep}
+        >
+          {t.previous}
+        </button>
+        <button
+          type="submit"
+          className={`h-12 px-6 rounded-xl bg-blue-600 text-white font-semibold shadow-lg hover:bg-blue-700 active:translate-y-[1px] transition ${!captchaToken ? "opacity-60 cursor-not-allowed" : ""}`}
+          disabled={!captchaToken}
+        >
+          {t.next}
+        </button>
+      </div>
+    </form>
   );
 };
 

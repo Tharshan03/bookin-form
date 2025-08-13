@@ -1,21 +1,10 @@
-import React from "react";
+import React, { useEffect, useMemo } from "react";
 import DatePicker from "react-datepicker";
 import Select from "react-select";
 import { destinations } from "../data/destinations";
 import { excursions } from "../data/excursions";
-import "react-datepicker/dist/react-datepicker.css";
 
-
-function getExcursionPrice(excursion, passengers) {
-  if (!excursion) return null;
-  if (passengers <= 4) return excursion.prices["1-4"];
-  if (passengers <= 8) return excursion.prices["5-8"];
-  if (passengers <= 12) return excursion.prices["9-12"];
-  return excursion.prices["13-16"];
-}
-
-
-const Step1_TripSelection = ({
+export default function Step1_TripSelection({
   t,
   tripType, setTripType,
   departure, setDeparture,
@@ -23,22 +12,23 @@ const Step1_TripSelection = ({
   selectedHotel, setSelectedHotel,
   departureDate, setDepartureDate,
   returnDate, setReturnDate,
+  price,
+  hotelOptions,
+  departureAddress, setDepartureAddress,
+  arrivalAddress, setArrivalAddress,
   passengers, setPassengers,
   childSeats, setChildSeats,
   luggage, setLuggage,
-  selectedVehicle, setSelectedVehicle,
-  price,
-  nextStep,
-  hotelOptions,
-  filteredVehicles,
-  vehicleImages,
-  // Ajoutés :
+  // ▼▼▼ NEW: Excursion
   selectedExcursion, setSelectedExcursion,
-  departureAddress, setDepartureAddress,
-  arrivalAddress, setArrivalAddress,
-}) => {
+  // ▲▲▲
+  nextStep,
+  embedded = false,
+}) {
+  const isRoundTrip = tripType === "round-trip";
+  const isDisney = departure === "disney" || arrival === "disney";
 
-  // Groupes villes pour selects
+  // Options villes
   const departureOptions = [
     { label: "France", options: destinations.filter(d => d.country === "France" && d.value !== arrival) },
     { label: "Belgique", options: destinations.filter(d => d.country === "Belgique" && d.value !== arrival) },
@@ -50,340 +40,303 @@ const Step1_TripSelection = ({
     { label: "Pays-Bas", options: destinations.filter(d => d.country === "Pays-Bas" && d.value !== departure) },
   ];
 
-  // --- Rendu ---
-  return (
-    <div className="flex justify-center items-center min-h-screen bg-black">
-      <form
-        className="bg-white rounded-2xl shadow-lg p-8 w-full max-w-md"
-        onSubmit={e => { e.preventDefault(); nextStep(); }}
-      >
-        <h2 className="text-2xl font-bold mb-6 text-center">{t.step1_title}</h2>
+  // Options excursions
+  const excursionOptions = excursions.map(e => ({ value: e.value, label: e.label }));
 
-        {/* Choix du type de trajet */}
-        <div className="flex justify-center gap-2 mb-6">
-          <button type="button"
-            className={`px-4 py-2 rounded-lg font-semibold border transition ${tripType === "one-way" ? "bg-blue-600 text-white shadow" : "bg-gray-100 text-gray-700"}`}
-            onClick={() => setTripType("one-way")}>{t.one_way}</button>
-          <button type="button"
-            className={`px-4 py-2 rounded-lg font-semibold border transition ${tripType === "round-trip" ? "bg-blue-600 text-white shadow" : "bg-gray-100 text-gray-700"}`}
-            onClick={() => setTripType("round-trip")}>{t.round_trip}</button>
-          <button type="button"
-            className={`px-4 py-2 rounded-lg font-semibold border transition ${tripType === "excursion" ? "bg-blue-600 text-white shadow" : "bg-gray-100 text-gray-700"}`}
-            onClick={() => setTripType("excursion")}>{t.excursion}</button>
+  // Hôtel Disney par défaut
+  const defaultDisneyHotel = useMemo(
+    () => hotelOptions?.find(h => String(h.value).toLowerCase() === "disney_park"),
+    [hotelOptions]
+  );
+  useEffect(() => {
+    if (tripType !== "excursion" && isDisney && !selectedHotel && defaultDisneyHotel) {
+      setSelectedHotel(defaultDisneyHotel);
+    }
+  }, [tripType, isDisney, selectedHotel, defaultDisneyHotel, setSelectedHotel]);
+
+  // Règles
+  const maxChildSeats = Math.max(0, passengers - 1);
+  const canContinue =
+    price != null &&
+    (tripType === "excursion"
+      ? !!selectedExcursion
+      : (!isDisney || !!selectedHotel));
+
+  // Styles react-select
+  const selectStyles = {
+    control: (base) => ({ ...base, minHeight: 38 }),
+    menuPortal: (base) => ({ ...base, zIndex: 9999 }),
+  };
+  const selectCommonProps = {
+    isSearchable: true,
+    menuPortalTarget: typeof window !== "undefined" ? document.body : null,
+    menuPosition: "fixed",
+    styles: selectStyles,
+  };
+
+  // Bouton compteur
+  const Btn = ({ onClick, disabled, children, aria }) => (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      aria-label={aria}
+      className={`h-8 w-8 rounded-full border bg-white hover:bg-slate-50 grid place-items-center text-[18px] leading-none ${
+        disabled ? "opacity-50 cursor-not-allowed" : ""
+      }`}
+    >
+      {children}
+    </button>
+  );
+
+  return (
+    <div
+      className="origin-top-left scale-[0.65] w-[154%]"
+      style={{ transformOrigin: "top left" }}
+    >
+      <div className="bg-white rounded-xl shadow-md p-6 md:p-8 min-h-[560px] flex flex-col">
+        <h2 className="text-xl font-bold text-center mb-4">{t.step1_title}</h2>
+
+        {/* PILL SWITCH */}
+        <div className="flex justify-center gap-2 mb-4" role="group" aria-label="Type de trajet">
+          {[
+            { id: "one-way", label: t.one_way },
+            { id: "round-trip", label: t.round_trip },
+            { id: "excursion", label: t.excursion },
+          ].map(btn => (
+            <button
+              key={btn.id}
+              type="button"
+              className={`px-3 py-1.5 rounded-lg text-sm font-semibold border transition ${
+                tripType === btn.id ? "bg-blue-600 text-white shadow" : "bg-gray-100 text-gray-700"
+              }`}
+              aria-pressed={tripType === btn.id}
+              onClick={() => setTripType(btn.id)}
+            >
+              {btn.label}
+            </button>
+          ))}
         </div>
 
-        {/* Mode EXCURSION */}
-        {tripType === "excursion" ? (
-          <>
-            <div className="mb-4">
-              <label className="block font-semibold mb-1">🗺️ Excursion</label>
-              <Select
-                options={excursions.map(e => ({ value: e.value, label: e.label }))}
-                value={excursions.find(e => e.value === selectedExcursion)}
-                onChange={opt => setSelectedExcursion(opt.value)}
-                placeholder="Sélectionnez une excursion"
-                isSearchable
-              />
-            </div>
-
-            <div className="mb-4">
-              <label className="block font-semibold mb-1">📅 {t.departureDate}</label>
-              <DatePicker
-                selected={departureDate}
-                onChange={setDepartureDate}
-                showTimeSelect
-                timeFormat="HH:mm"
-                timeIntervals={15}
-                dateFormat="dd/MM/yyyy HH:mm"
-                className="w-full border rounded px-3 py-2"
-                placeholderText={t.departureDate}
-              />
-            </div>
-
-            <div className="mb-4">
-              <label className="font-semibold mb-1 flex items-center gap-2">
-                <span>🧑</span> <span>{passengers} {t.passengers}</span>
-              </label>
-              <input
-                type="range"
-                min="1"
-                max="16"
-                value={passengers}
-                onChange={e => setPassengers(Number(e.target.value))}
-                className="w-full"
-              />
-            </div>
-
-           <div className="mb-4">
-            <label className="block font-semibold mb-1">🚗 {t.vehicleChoice}</label>
-            <div className="grid grid-cols-1 gap-4 justify-center items-stretch mt-2">
-              <div
-                tabIndex={0}
-                role="button"
-                aria-pressed={true}
-                className="
-                  cursor-pointer bg-white rounded-2xl shadow-md p-3 border-2 flex flex-col items-center w-44
-                  transition-all duration-200 outline-none 
-                  border-blue-600 ring-2 ring-blue-200 scale-105 bg-blue-50
-                "
-                // Ici pas besoin d’onClick car un seul choix possible, mais tu peux le laisser si tu veux rendre ça réutilisable
-              >
-                {/* Image */}
-                <div className="w-full h-28 flex items-center justify-center mb-2">
-                  <img
-                    src={vehicleImages["van_vito"]}
-                    alt="Van Vito Premium"
-                    className="object-contain h-24 w-auto transition-all duration-200"
-                  />
-                </div>
-                {/* Nom véhicule */}
-                <div className="font-semibold text-center text-lg mb-1">Van Vito Premium</div>
-                {/* Infos véhicule */}
-                <div className="text-xs text-gray-600 mb-1 text-center">
-                  8 pers. max · Grand coffre
-                </div>
-              </div>
-            </div>
-          </div>
-
-
-            {/* Prix de l’excursion */}
-            {selectedExcursion && price !== null && (
-              <div className="mb-4 text-center text-green-600 font-semibold text-lg">
-                {t.estimatedPrice} : {price} €
-              </div>
-            )}
-
-
-            <button
-              type="submit"
-              className="w-full bg-blue-600 text-white font-semibold py-2 rounded-lg shadow hover:bg-blue-700 transition"
-            >
-              {t.reserve}
-            </button>
-          </>
-        ) : (
-          // Mode normal aller simple/aller-retour
-          <>
-            {/* Date de départ */}
-            <div className="mb-4">
-              <label className="block font-semibold mb-1">📅 {t.departureDate}</label>
-              <DatePicker
-                selected={departureDate}
-                onChange={setDepartureDate}
-                showTimeSelect
-                timeFormat="HH:mm"
-                timeIntervals={15}
-                dateFormat="dd/MM/yyyy HH:mm"
-                className="w-full border rounded px-3 py-2"
-                placeholderText={t.departureDate}
-              />
-            </div>
-            {/* Date de retour (si round-trip) */}
-            {tripType === "round-trip" && (
-              <div className="mb-4">
-                <label className="block font-semibold mb-1">📅 {t.returnDate}</label>
+        {/* CONTENU */}
+        <div className="flex-1 overflow-y-auto space-y-4 pr-1">
+          {tripType === "excursion" ? (
+            // ========= MODE EXCURSION =========
+            <>
+              {/* Date & heure (pickup) */}
+              <div>
+                <label className="block text-sm font-semibold mb-1">📅 {t.departure_date || "Date & heure de départ"}</label>
                 <DatePicker
-                  selected={returnDate}
-                  onChange={setReturnDate}
+                  selected={departureDate}
+                  onChange={(d) => setDepartureDate(d)}
                   showTimeSelect
-                  timeFormat="HH:mm"
                   timeIntervals={15}
                   dateFormat="dd/MM/yyyy HH:mm"
-                  minDate={departureDate}
+                  minDate={new Date()}
                   className="w-full border rounded px-3 py-2"
-                  placeholderText={t.returnDate}
                 />
               </div>
-            )}
-              {/* Sélecteur de départ */}
-              <div className="mb-4">
-                <label className="block font-semibold mb-1">🚩 {t.departure}</label>
+
+              {/* Sélection Excursion */}
+              <div>
+                <label className="block text-sm font-semibold mb-1">🗺️ {t.excursion || "Excursion"}</label>
                 <Select
+                  {...selectCommonProps}
+                  options={excursionOptions}
+                  value={excursionOptions.find(x => x.value === selectedExcursion) || null}
+                  onChange={(opt) => setSelectedExcursion(opt?.value || null)}
+                  placeholder={t.selectExcursion || "Choisir une excursion…"}
+                />
+              </div>
+
+              {/* Compteurs */}
+              <div className="pt-1">
+                <div className="flex items-center justify-between px-6">
+                  {/* Passagers */}
+                  <div className="flex flex-col items-center">
+                    <span className="text-2xl" aria-hidden>🧍</span>
+                    <div className="mt-1 inline-flex items-center gap-2">
+                      <Btn onClick={() => setPassengers(p => Math.max(1, p - 1))} aria="Diminuer passagers">–</Btn>
+                      <span className="w-6 text-center select-none">{passengers}</span>
+                      <Btn onClick={() => setPassengers(p => Math.min(16, p + 1))} aria="Augmenter passagers">+</Btn>
+                    </div>
+                  </div>
+
+                  {/* Sièges enfant */}
+                  <div className="flex flex-col items-center">
+                    <span className="text-2xl" aria-hidden>👶</span>
+                    <div className="mt-1 inline-flex items-center gap-2">
+                      <Btn onClick={() => setChildSeats(n => Math.max(0, n - 1))} disabled={childSeats <= 0} aria="Diminuer sièges enfant">–</Btn>
+                      <span className="w-6 text-center select-none">{childSeats}</span>
+                      <Btn onClick={() => setChildSeats(n => Math.min(maxChildSeats, n + 1))} disabled={childSeats >= maxChildSeats} aria="Augmenter sièges enfant">+</Btn>
+                    </div>
+                  </div>
+
+                  {/* Valises */}
+                  <div className="flex flex-col items-center">
+                    <span className="text-2xl" aria-hidden>🧳</span>
+                    <div className="mt-1 inline-flex items-center gap-2">
+                      <Btn onClick={() => setLuggage(n => Math.max(0, n - 1))} disabled={luggage <= 0} aria="Diminuer valises">–</Btn>
+                      <span className="w-6 text-center select-none">{luggage}</span>
+                      <Btn onClick={() => setLuggage(n => n + 1)} aria="Augmenter valises">+</Btn>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </>
+          ) : (
+            // ======= MODE TRAJET CLASSIQUE =======
+            <>
+              {/* Dates */}
+              <div className={`grid grid-cols-1 ${isRoundTrip ? "md:grid-cols-2 md:gap-3" : ""}`}>
+                <div>
+                  <label className="block text-sm font-semibold mb-1">📅 {t.departure_date || "Date & heure de départ"}</label>
+                  <DatePicker
+                    selected={departureDate}
+                    onChange={(d) => setDepartureDate(d)}
+                    showTimeSelect
+                    timeIntervals={15}
+                    dateFormat="dd/MM/yyyy HH:mm"
+                    minDate={new Date()}
+                    className="w-full border rounded px-3 py-2"
+                  />
+                </div>
+                {isRoundTrip && (
+                  <div>
+                    <label className="block text-sm font-semibold mb-1">📅 {t.return_date || "Date de retour"}</label>
+                    <DatePicker
+                      selected={returnDate}
+                      onChange={(d) => setReturnDate(d)}
+                      showTimeSelect
+                      timeIntervals={15}
+                      dateFormat="dd/MM/yyyy HH:mm"
+                      minDate={departureDate || new Date()}
+                      className="w-full border rounded px-3 py-2"
+                    />
+                  </div>
+                )}
+              </div>
+
+              {/* Départ */}
+              <div>
+                <label className="block text-sm font-semibold mb-1">🚩 {t.departure}</label>
+                <Select
+                  {...selectCommonProps}
                   options={departureOptions}
                   value={destinations.find(opt => opt.value === departure)}
-                  onChange={opt => setDeparture(opt.value)}
+                  onChange={(opt) => setDeparture(opt?.value || "")}
                   placeholder="Sélectionnez la ville de départ"
-                  isSearchable
                 />
               </div>
-
-              {/* Champ d'adresse SI départ = Paris */}
               {departure === "paris" && (
-                <div className="mb-4 flex items-center gap-2">
-                  <span>📍</span>
-                  <input
-                    type="text"
-                    className="w-full border rounded px-3 py-2"
-                    value={departureAddress}
-                    onChange={e => setDepartureAddress(e.target.value)}
-                    placeholder={t.address_placeholder || "Indiquez votre adresse"}
-                    required
-                  />
-                </div>
+                <input
+                  type="text"
+                  className="w-full border rounded px-3 py-2 text-sm"
+                  value={departureAddress}
+                  onChange={(e) => setDepartureAddress(e.target.value)}
+                  placeholder={t.address_placeholder || "Indiquez votre adresse"}
+                  required
+                />
               )}
 
-              {/* Sélecteur d'arrivée */}
-              <div className="mb-4">
-                <label className="block font-semibold mb-1">🏁 {t.arrival}</label>
+              {/* Arrivée */}
+              <div>
+                <label className="block text-sm font-semibold mb-1">🏁 {t.arrival}</label>
                 <Select
+                  {...selectCommonProps}
                   options={arrivalOptions}
                   value={destinations.find(opt => opt.value === arrival)}
-                  onChange={opt => setArrival(opt.value)}
+                  onChange={(opt) => setArrival(opt?.value || "")}
                   placeholder="Sélectionnez la ville d'arrivée"
-                  isSearchable
                 />
               </div>
-
-              {/* Champ d'adresse SI arrivée = Paris */}
               {arrival === "paris" && (
-                <div className="mb-4 flex items-center gap-2">
-                  <span>📍</span>
-                  <input
-                    type="text"
-                    className="w-full border rounded px-3 py-2"
-                    value={arrivalAddress}
-                    onChange={e => setArrivalAddress(e.target.value)}
-                    placeholder={t.address_placeholder || "Indiquez votre adresse"}
-                    required
-                  />
-                </div>
+                <input
+                  type="text"
+                  className="w-full border rounded px-3 py-2 text-sm"
+                  value={arrivalAddress}
+                  onChange={(e) => setArrivalAddress(e.target.value)}
+                  placeholder={t.address_placeholder || "Indiquez votre adresse"}
+                  required
+                />
               )}
 
-              {/* Select hôtel Disney si besoin */}
-              {(departure === "disney" || arrival === "disney") && (
-                <div className="mb-4">
-                  <label className="block font-semibold mb-1">🏨 {t.selectHotel}</label>
+              {/* Hôtel Disney (si Disney) */}
+              {isDisney && (
+                <div>
+                  <label className="block text-sm font-semibold mb-1">🏨 {t.selectHotel || "Choisissez votre hôtel à Disney"}</label>
                   <Select
+                    {...selectCommonProps}
                     options={hotelOptions}
                     value={selectedHotel}
                     onChange={setSelectedHotel}
-                    isClearable
-                    placeholder={t.hotelPlaceholder}
+                    isClearable={false}
+                    placeholder={t.hotelPlaceholder || "Sélectionner un hôtel…"}
                   />
+                  {!selectedHotel && (
+                    <p className="text-xs text-red-600 mt-1">Ce champ est obligatoire.</p>
+                  )}
                 </div>
               )}
 
-            {/* Passagers */}
-            <div className="mb-4">
-              <label className="font-semibold mb-1 flex items-center gap-2">
-                <span>🧑</span> <span>{passengers} {t.passengers}</span>
-              </label>
-              <input
-                type="range"
-                min="1"
-                max="16"
-                value={passengers}
-                onChange={e => setPassengers(Number(e.target.value))}
-                className="w-full"
-              />
-            </div>
-
-            {/* Siège enfant */}
-            <div className="mb-4">
-              <label className="font-semibold mb-1 flex items-center gap-2">
-                <span>🍼</span> <span>{childSeats} {t.childSeats}</span>
-              </label>
-              <input
-                type="range"
-                min="0"
-                max={Math.max(0, passengers - 1)}
-                value={childSeats}
-                onChange={e => setChildSeats(Number(e.target.value))}
-                className="w-full"
-              />
-            </div>
-
-            {/* Valises */}
-            <div className="mb-4">
-              <label className="font-semibold mb-1 flex items-center gap-2">
-                <span>🧳</span> <span>{luggage} {t.luggage}</span>
-              </label>
-              <input
-                type="range"
-                min="0"
-                max="14"
-                value={luggage}
-                onChange={e => setLuggage(Number(e.target.value))}
-                className="w-full"
-              />
-            </div>
-
-
-            {/* Choix véhicule */}
-              <div className="mb-4">
-                <label className="block font-semibold mb-1">🚗 {t.vehicleChoice}</label>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 justify-center items-stretch mt-2">
-                  {filteredVehicles.map(vehicle => (
-                    <div
-                      key={vehicle.id}
-                      tabIndex={0}
-                      role="button"
-                      aria-pressed={selectedVehicle === vehicle.id}
-                      className={`
-                        cursor-pointer bg-white rounded-2xl shadow-md p-3 border-2 flex flex-col items-center w-44
-                        transition-all duration-200 outline-none 
-                        ${selectedVehicle === vehicle.id ? "border-blue-600 ring-2 ring-blue-200 scale-105 bg-blue-50" : "border-gray-200"}
-                        hover:shadow-lg hover:border-blue-400 hover:scale-105
-                        focus:border-blue-600 focus:ring-2 focus:ring-blue-200
-                      `}
-                      onClick={() => setSelectedVehicle(vehicle.id)}
-                      onKeyDown={e => {
-                        if (e.key === "Enter" || e.key === " ") {
-                          setSelectedVehicle(vehicle.id);
-                        }
-                      }}
-                    >
-                      {/* Image */}
-                      <div className="w-full h-28 flex items-center justify-center mb-2">
-                        <img
-                          src={vehicleImages[vehicle.id]}
-                          alt={t[vehicle.id] || vehicle.name}
-                          className="object-contain h-24 w-auto transition-all duration-200"
-                        />
-                      </div>
-                      {/* Nom véhicule */}
-                      <div className="font-semibold text-center text-lg mb-1">{t[vehicle.id] || vehicle.name}</div>
-                      {/* Infos véhicule */}
-                      <div className="text-xs text-gray-600 mb-1 text-center">
-                        {vehicle.id === "mercedes" && <>4 pers. max · Climatisation</>}
-                        {vehicle.id === "van_standard" && <>7 pers. max · Climatisation</>}
-                        {vehicle.id === "van_vito" && <>8 pers. max · Grand coffre</>}
-                      </div>
-                      {/* Extra prix */}
-                      {vehicle.id === "van_standard" && passengers <= 4 && (
-                        <span className="mt-1 text-xs px-2 py-0.5 rounded-full bg-blue-50 text-blue-600 font-semibold border border-blue-100">
-                          +5 €
-                        </span>
-                      )}
+              {/* Compteurs */}
+              <div className="pt-1">
+                <div className="flex items-center justify-between px-6">
+                  {/* Passagers */}
+                  <div className="flex flex-col items-center">
+                    <span className="text-2xl" aria-hidden>🧍</span>
+                    <div className="mt-1 inline-flex items-center gap-2">
+                      <Btn onClick={() => setPassengers(p => Math.max(1, p - 1))} aria="Diminuer passagers">–</Btn>
+                      <span className="w-6 text-center select-none">{passengers}</span>
+                      <Btn onClick={() => setPassengers(p => Math.min(16, p + 1))} aria="Augmenter passagers">+</Btn>
                     </div>
-                  ))}
+                  </div>
+
+                  {/* Sièges enfant */}
+                  <div className="flex flex-col items-center">
+                    <span className="text-2xl" aria-hidden>👶</span>
+                    <div className="mt-1 inline-flex items-center gap-2">
+                      <Btn onClick={() => setChildSeats(n => Math.max(0, n - 1))} disabled={childSeats <= 0} aria="Diminuer sièges enfant">–</Btn>
+                      <span className="w-6 text-center select-none">{childSeats}</span>
+                      <Btn onClick={() => setChildSeats(n => Math.min(maxChildSeats, n + 1))} disabled={childSeats >= maxChildSeats} aria="Augmenter sièges enfant">+</Btn>
+                    </div>
+                  </div>
+
+                  {/* Valises */}
+                  <div className="flex flex-col items-center">
+                    <span className="text-2xl" aria-hidden>🧳</span>
+                    <div className="mt-1 inline-flex items-center gap-2">
+                      <Btn onClick={() => setLuggage(n => Math.max(0, n - 1))} disabled={luggage <= 0} aria="Diminuer valises">–</Btn>
+                      <span className="w-6 text-center select-none">{luggage}</span>
+                      <Btn onClick={() => setLuggage(n => n + 1)} aria="Augmenter valises">+</Btn>
+                    </div>
+                  </div>
                 </div>
               </div>
+            </>
+          )}
+        </div>
 
-
-            {price !== null ? (
-              <div className="mb-4 text-center text-green-600 font-semibold text-lg">
-                {t.estimatedPrice} : {price} €
+        {/* FOOTER */}
+        <div className="mt-4 flex items-center gap-3">
+          <div className="flex-1">
+            <div className="w-full rounded-xl border border-emerald-200 bg-emerald-50/70 px-4 py-3">
+              <div className="text-sm text-emerald-700/90 font-medium">{t.estimatedPrice || "Prix estimé"}</div>
+              <div className="text-2xl font-extrabold text-emerald-700">
+                {price != null ? `${price} €` : "--"}
               </div>
-            ) : (
-              <div className="mb-4 text-center text-orange-500 font-semibold text-lg">
-                Le tarif vous sera communiqué par mail, continuez votre réservation.
-              </div>
-            )}
-
-            <button
-              type="submit"
-              className="w-full bg-blue-600 text-white font-semibold py-2 rounded-lg shadow hover:bg-blue-700 transition"
-            >
-              {t.reserve}
-            </button>
-          </>
-        )}
-      </form>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => { if (canContinue) nextStep(); }}
+            className="h-12 px-6 rounded-xl bg-blue-600 text-white font-semibold shadow-lg hover:bg-blue-700 active:translate-y-[1px] transition disabled:opacity-60"
+            disabled={!canContinue}
+          >
+            {t.next || "Suivant"}
+          </button>
+        </div>
+      </div>
     </div>
   );
-};
-
-export default Step1_TripSelection;
+}

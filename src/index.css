@@ -54,3 +54,16 @@
   object-fit: cover;
   border-radius: 12px;
 }
+
+body { @apply font-sans antialiased; }
+
+/* Cache la scrollbar mais garde le scroll */
+.no-scrollbar {
+  -ms-overflow-style: none;     /* IE/Edge */
+  scrollbar-width: none;        /* Firefox */
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;                /* Chrome/Safari */
+}
+
+
