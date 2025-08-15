@@ -12,12 +12,15 @@ const Step3_Recap = ({
   const fmt = (d) =>
     d
       ? d.toLocaleString("fr-FR", {
-          day: "2-digit", month: "2-digit", year: "numeric",
-          hour: "2-digit", minute: "2-digit",
+          day: "2-digit",
+          month: "2-digit",
+          year: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
         })
       : "";
 
-  // Contenu principal (sans carte)
+  // Contenu principal
   const Content = (
     <>
       <h2 className="text-xl font-bold mb-4 text-center">
@@ -26,22 +29,64 @@ const Step3_Recap = ({
 
       {/* Trajet */}
       <div className="mb-4">
-        <h3 className="font-semibold mb-2">{t.recapTrip || "📝 Trajet"}</h3>
+        <h3 className="font-semibold mb-2">{t.recapTrip || "📝 Trajet"} </h3>
         <ul className="space-y-1 text-sm">
-          <li><span className="font-medium">{t.tripType || "Type"} :</span> {t[tripType] || tripType}</li>
-          <li><span className="font-medium">{t.departure || "Départ"} :</span> {t[departure] || (departure?.[0]?.toUpperCase() + departure?.slice(1))}</li>
-          <li><span className="font-medium">{t.arrival || "Arrivée"} :</span> {t[arrival] || (arrival?.[0]?.toUpperCase() + arrival?.slice(1))}</li>
+          <li>
+            <span className="font-medium">{t.tripType || "Type"} :</span>{" "}
+            {t[tripType] || tripType}
+          </li>
+          <li>
+            <span className="font-medium">{t.departure || "Départ"} :</span>{" "}
+            {t[departure] || (departure?.[0]?.toUpperCase() + departure?.slice(1))}
+          </li>
+          <li>
+            <span className="font-medium">{t.arrival || "Arrivée"} :</span>{" "}
+            {t[arrival] || (arrival?.[0]?.toUpperCase() + arrival?.slice(1))}
+          </li>
           {(departure === "disney" || arrival === "disney") && selectedHotel && (
-            <li><span className="font-medium">{t.selectHotel || "Hôtel Disney"} :</span> {selectedHotel.label}</li>
+            <li>
+              <span className="font-medium">
+                {t.selectHotel || "Hôtel Disney"} :
+              </span>{" "}
+              {selectedHotel.label}
+            </li>
           )}
-          <li><span className="font-medium">{t.departureDate || "Date de départ"} :</span> {fmt(departureDate)}</li>
+          <li>
+            <span className="font-medium">
+              {t.departureDate || "Date de départ"} :
+            </span>{" "}
+            {fmt(departureDate)}
+          </li>
           {tripType === "round-trip" && (
-            <li><span className="font-medium">{t.returnDate || "Date de retour"} :</span> {fmt(returnDate)}</li>
+            <li>
+              <span className="font-medium">
+                {t.returnDate || "Date de retour"} :
+              </span>{" "}
+              {fmt(returnDate)}
+            </li>
           )}
-          <li><span className="font-medium">{t.passengers || "Passagers"} :</span> {passengers}</li>
-          <li><span className="font-medium">{t.childSeats || "Sièges enfant"} :</span> {childSeats}</li>
-          <li><span className="font-medium">{t.luggage || "Valises"} :</span> {luggage}</li>
-          <li><span className="font-medium">{t.vehicleChoice || "Véhicule"} :</span> {t[selectedVehicle] || selectedVehicle}</li>
+          <li>
+            <span className="font-medium">
+              {t.passengers || "Passagers"} :
+            </span>{" "}
+            {passengers}
+          </li>
+          <li>
+            <span className="font-medium">
+              {t.childSeats || "Sièges enfant"} :
+            </span>{" "}
+            {childSeats}
+          </li>
+          <li>
+            <span className="font-medium">{t.luggage || "Valises"} :</span>{" "}
+            {luggage}
+          </li>
+          <li>
+            <span className="font-medium">
+              {t.vehicleChoice || "Véhicule"} :
+            </span>{" "}
+            {t[selectedVehicle] || selectedVehicle}
+          </li>
         </ul>
       </div>
 
@@ -49,11 +94,32 @@ const Step3_Recap = ({
       <div className="mb-4">
         <h3 className="font-semibold mb-2">{t.customerInfo || "👤 Client"}</h3>
         <ul className="space-y-1 text-sm">
-          <li><span className="font-medium">{t.fullName || "Nom"} :</span> {fullName}</li>
-          <li><span className="font-medium">{t.email || "Email"} :</span> {email}</li>
-          <li><span className="font-medium">{t.phone || "Téléphone"} :</span> {phone}</li>
-          {flightNumber && <li><span className="font-medium">{t.flightNumber || "Vol"} :</span> {flightNumber}</li>}
-          {comment && <li><span className="font-medium">{t.comment || "Commentaire"} :</span> {comment}</li>}
+          <li>
+            <span className="font-medium">{t.fullName || "Nom"} :</span>{" "}
+            {fullName}
+          </li>
+          <li>
+            <span className="font-medium">{t.email || "Email"} :</span>{" "}
+            {email}
+          </li>
+          <li>
+            <span className="font-medium">{t.phone || "Téléphone"} :</span>{" "}
+            {phone}
+          </li>
+          {flightNumber && (
+            <li>
+              <span className="font-medium">
+                {t.flightNumber || "Vol"} :
+              </span>{" "}
+              {flightNumber}
+            </li>
+          )}
+          {comment && (
+            <li>
+              <span className="font-medium">{t.comment || "Commentaire"} :</span>{" "}
+              {comment}
+            </li>
+          )}
         </ul>
       </div>
 
@@ -66,14 +132,16 @@ const Step3_Recap = ({
       <div className="flex justify-between gap-4">
         <button
           type="button"
-          className="w-1/2 bg-gray-100 text-gray-900 font-semibold py-2 rounded-lg shadow"
+          className="w-1/2 bg-gray-100 text-gray-900 font-semibold py-2 rounded-lg shadow hover:bg-gray-200 transition"
           onClick={prevStep}
         >
           {t.previous || "Précédent"}
         </button>
         <button
           type="button"
-          className={`w-1/2 bg-green-600 text-white font-semibold py-2 rounded-lg shadow hover:bg-green-700 transition ${sending ? "opacity-50 cursor-not-allowed" : ""}`}
+          className={`w-1/2 bg-green-600 text-white font-semibold py-2 rounded-lg shadow hover:bg-green-700 transition ${
+            sending ? "opacity-50 cursor-not-allowed" : ""
+          }`}
           onClick={handleConfirm}
           disabled={sending}
         >
@@ -95,12 +163,21 @@ const Step3_Recap = ({
     </>
   );
 
-  // Si "embedded", on ne re-crée PAS de carte interne.
+  // Version intégrée (même gabarit que Step 1)
   if (embedded) {
-    return <div className="w-full">{Content}</div>;
+    return (
+      <div
+        className="origin-top-left scale-[0.75] w-[60%]"
+        style={{ transformOrigin: "top left" }}
+      >
+        <div className="bg-white rounded-xl shadow-md p-6 md:p-8">
+          {Content}
+        </div>
+      </div>
+    );
   }
 
-  // Sinon, version autonome pleine page
+  // Version autonome (plein écran centré)
   return (
     <div className="flex justify-center items-center min-h-screen bg-black">
       <div className="bg-white rounded-xl shadow-md p-4 md:p-5 w-full max-w-sm mx-auto">

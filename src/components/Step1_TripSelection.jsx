@@ -91,9 +91,10 @@ export default function Step1_TripSelection({
 
   return (
     <div
-      className="origin-top-left scale-[0.65] w-[154%]"
+      className="origin-top-left scale-[.75] w-[65%]"
       style={{ transformOrigin: "top left" }}
     >
+
       <div className="bg-white rounded-xl shadow-md p-6 md:p-8 min-h-[560px] flex flex-col">
         <h2 className="text-xl font-bold text-center mb-4">{t.step1_title}</h2>
 
@@ -190,7 +191,7 @@ export default function Step1_TripSelection({
               {/* Dates */}
               <div className={`grid grid-cols-1 ${isRoundTrip ? "md:grid-cols-2 md:gap-3" : ""}`}>
                 <div>
-                  <label className="block text-sm font-semibold mb-1">📅 {t.departure_date || "Date & heure de départ"}</label>
+                  <label className="block text-sm font-semibold mb-1">📅 {t.departure_date || "Date de départ"}</label>
                   <DatePicker
                     selected={departureDate}
                     onChange={(d) => setDepartureDate(d)}

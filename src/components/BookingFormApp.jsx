@@ -151,8 +151,83 @@ const BookingFormApp = () => {
   const prevStep = () => setStep(s => s - 1);
 
   const handleConfirm = async () => {
-    /* ... ton existant d’envoi ... */
+    setSending(true);
+    setMailStatus("");
+
+    try {
+      // ID unique pour la réservation
+      const bookingNumber = Date.now().toString();
+
+      // Lien d’admin/confirmation
+      const base = "https://parisairportdisneyprestigetransfer.fr/booking-taxi";
+      const adminConfirmationLink =
+        `${base}/confirm-mail.php?id=${bookingNumber}` +
+        `&email=${encodeURIComponent(email)}` +
+        `&name=${encodeURIComponent(fullName || "")}`;
+
+      // formatage FR lisible
+      const fmt = (d) =>
+        d
+          ? d.toLocaleString("fr-FR", {
+              day: "2-digit",
+              month: "2-digit",
+              year: "numeric",
+              hour: "2-digit",
+              minute: "2-digit",
+            })
+          : "";
+
+      const payload = {
+        id: bookingNumber,
+        adminConfirmationLink,             // ← UNE SEULE FOIS
+
+        // client
+        name: fullName,
+        email,
+        phone,
+        flightNumber,
+        comment,
+
+        // trajet
+        tripType,
+        departure,
+        arrival,
+        departureDate: fmt(departureDate),
+        pickupDate: fmt(departureDate),
+        returnDate: tripType === "round-trip" ? fmt(returnDate) : "",
+        passengers,
+        childSeats,
+        luggage,
+        vehicle: selectedVehicle,
+        price,
+        selectedHotel,
+
+        // utile côté serveur
+        lang: document.documentElement.lang?.slice(0, 2).toLowerCase() || "fr",
+        captchaToken,
+      };
+
+      // PROD : bon chemin (pas /api/)
+      const res = await fetch("/booking-taxi/send-mail.php", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || data?.status !== "success") {
+        throw new Error(data?.message || "send_failed");
+      }
+
+      setMailStatus("success");
+    } catch (err) {
+      console.error(err);
+      setMailStatus("error");
+    } finally {
+      setSending(false);
+    }
   };
+
 
   return (
     <div className="max-w-2xl mx-auto p-4">
@@ -233,9 +308,10 @@ const BookingFormApp = () => {
           mailStatus={mailStatus}
           setMailStatus={setMailStatus}
           handleConfirm={handleConfirm}
-          // (facultatif) tu peux aussi afficher selectedExcursion dans le récap
+          embedded   // 👈 ajoute ce prop
         />
       )}
+
     </div>
   );
 };
